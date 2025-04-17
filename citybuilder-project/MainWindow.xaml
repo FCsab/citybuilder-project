@@ -3,10 +3,125 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:citybuilder_project"
+        xmlns:vm="clr-namespace:citybuilder_project.ViewModel"
+        xmlns:model="clr-namespace:citybuilder_project.Model"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
-    <Grid>
+        Title="City Builder Game" Height="800" Width="1000">
 
+    <!-- Define the necessary converters -->
+    <Window.Resources>
+        <vm:IncomeToColorConverter x:Key="IncomeToColorConverter" />
+        <vm:NegativeCyclesToColorConverter x:Key="NegativeCyclesToColorConverter" />
+        <vm:NullToVisibilityConverter x:Key="NullToVisibilityConverter" />
+        <vm:ZeroToVisibilityConverter x:Key="ZeroToVisibilityConverter" />
+        <vm:BuildingTypeToNameConverter x:Key="BuildingTypeToNameConverter" />
+    </Window.Resources>
+
+
+    <Window.DataContext>
+        <vm:MainViewModel />
+    </Window.DataContext>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="250" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <!-- Header with Game Controls -->
+        <StackPanel Grid.Row="0" Grid.ColumnSpan="2" Orientation="Horizontal" Background="LightGray" Margin="0,0,0,5">
+            <Button Content="Start Game" Command="{Binding StartGameCommand}" Margin="5" Padding="10,5" />
+            <Button Content="Reset Game" Command="{Binding ResetGameCommand}" Margin="5" Padding="10,5" />
+            <TextBlock Text="{Binding GameStatus}" VerticalAlignment="Center" Margin="10,0" FontWeight="Bold" />
+        </StackPanel>
+
+        <!-- Left Panel with City Stats and Building Selection -->
+        <Grid Grid.Row="1" Grid.Column="0" Margin="10,0,5,0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <!-- City Stats -->
+            <GroupBox Grid.Row="0" Header="City Statistics" Margin="0,0,0,10">
+                <StackPanel Margin="5">
+                    <TextBlock Text="{Binding City.Money, StringFormat='Money: ${0}'}" FontWeight="Bold" />
+                    <TextBlock Text="{Binding City.Income, StringFormat='Income: ${0}/cycle'}" Foreground="{Binding City.Income, Converter={StaticResource IncomeToColorConverter}}" />
+                    <TextBlock Text="{Binding City.Population, StringFormat='Population: {0}'}" />
+                    <TextBlock Text="{Binding City.AvailableHousing, StringFormat='Available Housing: {0}'}" />
+                    <TextBlock Text="{Binding City.PowerProduction, StringFormat='Power Production: {0}'}" />
+                    <TextBlock Text="{Binding City.PowerConsumption, StringFormat='Power Consumption: {0}'}" />
+                    <TextBlock Text="{Binding City.AvailablePower, StringFormat='Available Power: {0}'}" />
+                    <TextBlock Text="{Binding City.WaterProduction, StringFormat='Water Production: {0}'}" />
+                    <TextBlock Text="{Binding City.WaterConsumption, StringFormat='Water Consumption: {0}'}" />
+                    <TextBlock Text="{Binding City.AvailableWater, StringFormat='Available Water: {0}'}" />
+                    <TextBlock Text="{Binding City.NegativeCycles, StringFormat='Negative Cycles: {0}'}" 
+                               Foreground="{Binding City.NegativeCycles, Converter={StaticResource NegativeCyclesToColorConverter}}" />
+                </StackPanel>
+            </GroupBox>
+
+            <!-- Building Selection -->
+            <GroupBox Grid.Row="1" Header="Available Buildings" Margin="0,0,0,10">
+                <ListBox ItemsSource="{Binding AvailableBuildings}" 
+                         SelectedItem="{Binding SelectedBuildingType}"
+                         Height="180">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Converter={StaticResource BuildingTypeToNameConverter}}" />
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </GroupBox>
+
+            <!-- Building Details -->
+            <GroupBox Grid.Row="2" Header="Building Details" Margin="0,0,0,10">
+                <StackPanel>
+                    <TextBlock Text="No building selected" Visibility="{Binding SelectedBuilding, Converter={StaticResource NullToVisibilityConverter}, ConverterParameter=True}" />
+                    <StackPanel Visibility="{Binding SelectedBuilding, Converter={StaticResource NullToVisibilityConverter}}">
+                        <TextBlock Text="{Binding SelectedBuilding.Name}" FontWeight="Bold" FontSize="14" />
+                        <TextBlock Text="{Binding SelectedBuilding.Cost, StringFormat='Cost: ${0}'}" />
+                        <TextBlock Text="{Binding SelectedBuilding.MaintenanceCost, StringFormat='Maintenance: ${0}/cycle'}" />
+                        <TextBlock Text="{Binding SelectedBuilding.HousingCapacity, StringFormat='Housing: {0}'}" 
+                                   Visibility="{Binding SelectedBuilding.HousingCapacity, Converter={StaticResource ZeroToVisibilityConverter}}" />
+                        <TextBlock Text="{Binding SelectedBuilding.PowerProduction, StringFormat='Power Production: {0}'}" 
+                                   Visibility="{Binding SelectedBuilding.PowerProduction, Converter={StaticResource ZeroToVisibilityConverter}}" />
+                        <TextBlock Text="{Binding SelectedBuilding.PowerConsumption, StringFormat='Power Consumption: {0}'}" 
+                                   Visibility="{Binding SelectedBuilding.PowerConsumption, Converter={StaticResource ZeroToVisibilityConverter}}" />
+                        <TextBlock Text="{Binding SelectedBuilding.WaterProduction, StringFormat='Water Production: {0}'}" 
+                                   Visibility="{Binding SelectedBuilding.WaterProduction, Converter={StaticResource ZeroToVisibilityConverter}}" />
+                        <TextBlock Text="{Binding SelectedBuilding.WaterConsumption, StringFormat='Water Consumption: {0}'}" 
+                                   Visibility="{Binding SelectedBuilding.WaterConsumption, Converter={StaticResource ZeroToVisibilityConverter}}" />
+                    </StackPanel>
+                </StackPanel>
+            </GroupBox>
+        </Grid>
+
+        <!-- Grid Panel -->
+        <ItemsControl Grid.Row="1" Grid.Column="1" ItemsSource="{Binding Cells}">
+            <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <UniformGrid Rows="15" Columns="15" />
+                </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                    <Border Width="45" Height="45" Margin="2"
+                            Background="{Binding Color}" 
+                            BorderBrush="Black" BorderThickness="1">
+                        <Border.InputBindings>
+                            <MouseBinding Gesture="LeftClick" 
+                                          Command="{Binding DataContext.PlaceBuildingCommand, 
+                                                            RelativeSource={RelativeSource AncestorType=ItemsControl}}" 
+                                          CommandParameter="{Binding}" />
+                        </Border.InputBindings>
+                    </Border>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
     </Grid>
 </Window>
