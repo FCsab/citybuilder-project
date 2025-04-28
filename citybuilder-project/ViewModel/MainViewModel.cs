@@ -47,7 +47,7 @@ namespace citybuilder_project.ViewModel
             }
         }
 
-        public ICommand PlaceBuildingCommand { get; }
+        public ICommand PlaceBuildingCommand { get; set; }
         public ICommand StartGameCommand { get; }
         public ICommand ResetGameCommand { get; }
 
@@ -112,10 +112,11 @@ namespace citybuilder_project.ViewModel
 
             _populationTimer = new DispatcherTimer
             {
-                Interval = TimeSpan.FromSeconds(30)  // Population growth every 30 seconds
+                Interval = TimeSpan.FromSeconds(5)
             };
             _populationTimer.Tick += OnPopulationTimerTick;
         }
+
 
         private void StartGame()
         {
@@ -136,31 +137,38 @@ namespace citybuilder_project.ViewModel
         }
 
         private void OnGameTimerTick(object? sender, EventArgs e)
+{
+    _cycleCounter++;
+    GameStatus = $"Game cycle: {_cycleCounter}";
+
+    // Add income to money
+    _city.Money += _city.Income;
+
+            // Regenerate a small amount of resources each cycle to ensure building is always possible
+            _city.Money += City.Income;
+    
+    // Check for game over condition
+    if (_city.Money < 0)
+    {
+        _city.NegativeCycles++;
+        if (_city.IsGameOver)
         {
-            _cycleCounter++;
-            GameStatus = $"Game cycle: {_cycleCounter}";
-
-            // Add income to money
-            _city.Money += _city.Income;
-
-            // Check for game over condition
-            if (_city.Money < 0)
-            {
-                _city.NegativeCycles++;
-                if (_city.IsGameOver)
-                {
-                    _gameTimer.Stop();
-                    _populationTimer.Stop();
-                    GameStatus = "Game Over! You've been in debt for 2 cycles.";
-                }
-            }
-            else
-            {
-                _city.NegativeCycles = 0;
-            }
-
-            OnPropertyChanged(nameof(City));
+            _gameTimer.Stop();
+            _populationTimer.Stop();
+            GameStatus = "Game Over! You've been in debt for 2 cycles.";
         }
+    }
+    else
+    {
+        _city.NegativeCycles = 0;
+    }
+
+    // Refresh UI commands to update building placement availability
+    RefreshCommands();
+
+    OnPropertyChanged(nameof(City));
+}
+
 
         private void OnPopulationTimerTick(object? sender, EventArgs e)
         {
@@ -174,7 +182,7 @@ namespace citybuilder_project.ViewModel
 
                 if (actualNewCitizens > 0)
                 {
-                    GameStatus = $"{actualNewCitizens} new citizens moved to your city!";
+                    GameStatus = $"{actualNewCitizens} new citizen(s) moved to your city!";
                 }
             }
         }
@@ -219,12 +227,22 @@ namespace citybuilder_project.ViewModel
                 // Update city model
                 _city.AddBuilding(building);
 
-                // Refresh command validity for all cells
-                (PlaceBuildingCommand as RelayCommand<CellModel>)?.RaiseCanExecuteChanged();
+                // Refresh all commands
+                RefreshCommands();
 
-                OnPropertyChanged(nameof(City));
+                // Show status message
+                GameStatus = $"Placed {building.Name}";
             }
         }
+
+        private void RefreshCommands()
+        {
+            (PlaceBuildingCommand as RelayCommand<CellModel>)?.RaiseCanExecuteChanged();
+            (StartGameCommand as RelayCommand<object>)?.RaiseCanExecuteChanged();
+            (ResetGameCommand as RelayCommand<object>)?.RaiseCanExecuteChanged();
+        }
+
+
 
         public event PropertyChangedEventHandler? PropertyChanged;
 

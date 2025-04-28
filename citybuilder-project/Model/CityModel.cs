@@ -5,7 +5,8 @@ namespace citybuilder_project.Model
 {
     public class CityModel : INotifyPropertyChanged
     {
-        private int _money = 10000; // Starting money
+        // Starting money
+        private int _money = 100000;
         private int _income = 0;
         private int _population = 0;
         private int _housingCapacity = 0;
@@ -14,6 +15,7 @@ namespace citybuilder_project.Model
         private int _waterProduction = 0;
         private int _waterConsumption = 0;
         private int _negativeCycles = 0;
+        private int _totalMaintenanceCost = 0;
 
         public int Money
         {
@@ -24,6 +26,7 @@ namespace citybuilder_project.Model
                 {
                     _money = value;
                     OnPropertyChanged();
+                    OnPropertyChanged(nameof(Income)); // Income depends on money in some cases
                 }
             }
         }
@@ -50,6 +53,7 @@ namespace citybuilder_project.Model
                 {
                     _population = value;
                     OnPropertyChanged();
+                    OnPropertyChanged(nameof(AvailableHousing));
                     CalculateIncome();
                 }
             }
@@ -58,7 +62,7 @@ namespace citybuilder_project.Model
         public int HousingCapacity
         {
             get => _housingCapacity;
-            set
+            private set
             {
                 if (_housingCapacity != value)
                 {
@@ -74,7 +78,7 @@ namespace citybuilder_project.Model
         public int PowerProduction
         {
             get => _powerProduction;
-            set
+            private set
             {
                 if (_powerProduction != value)
                 {
@@ -88,7 +92,7 @@ namespace citybuilder_project.Model
         public int PowerConsumption
         {
             get => _powerConsumption;
-            set
+            private set
             {
                 if (_powerConsumption != value)
                 {
@@ -104,7 +108,7 @@ namespace citybuilder_project.Model
         public int WaterProduction
         {
             get => _waterProduction;
-            set
+            private set
             {
                 if (_waterProduction != value)
                 {
@@ -118,7 +122,7 @@ namespace citybuilder_project.Model
         public int WaterConsumption
         {
             get => _waterConsumption;
-            set
+            private set
             {
                 if (_waterConsumption != value)
                 {
@@ -140,46 +144,92 @@ namespace citybuilder_project.Model
                 {
                     _negativeCycles = value;
                     OnPropertyChanged();
+                    OnPropertyChanged(nameof(IsGameOver));
                 }
             }
         }
 
         public bool IsGameOver => NegativeCycles >= 2;
 
-        private int _totalMaintenanceCost = 0;
-
         public void CalculateIncome()
         {
-            // Each citizen provides 50 income
-            int citizenIncome = Population * 50;
+            // Each citizen contributes $5 to income
+            int citizenIncome = Population * 5;
+
+            // Calculate the final income
             Income = citizenIncome - _totalMaintenanceCost;
         }
 
         public void AddBuilding(Building building)
         {
+            if (building == null)
+                return;
+
+            // Deduct cost from money
+            Money -= building.Cost;
+
+            // Add maintenance cost
+            _totalMaintenanceCost += building.MaintenanceCost;
+
+            // Update resources
             HousingCapacity += building.HousingCapacity;
             PowerProduction += building.PowerProduction;
             PowerConsumption += building.PowerConsumption;
             WaterProduction += building.WaterProduction;
             WaterConsumption += building.WaterConsumption;
 
-            _totalMaintenanceCost += building.MaintenanceCost;
+            // Recalculate income
             CalculateIncome();
 
-            Money -= building.Cost;
+            // Ensure all properties get notified
+            OnPropertyChanged(nameof(Money));
+            OnPropertyChanged(nameof(Income));
+            OnPropertyChanged(nameof(HousingCapacity));
+            OnPropertyChanged(nameof(PowerProduction));
+            OnPropertyChanged(nameof(PowerConsumption));
+            OnPropertyChanged(nameof(WaterProduction));
+            OnPropertyChanged(nameof(WaterConsumption));
+            OnPropertyChanged(nameof(AvailableHousing));
+            OnPropertyChanged(nameof(AvailablePower));
+            OnPropertyChanged(nameof(AvailableWater));
         }
 
         public bool CanAfford(Building building)
         {
+            if (building == null)
+                return false;
+
             return Money >= building.Cost;
         }
 
         public bool CanSupport(Building building)
         {
-            // Check if we have enough power and water for this new building
-            return (AvailablePower >= building.PowerConsumption) &&
-                   (AvailableWater >= building.WaterConsumption);
+            if (building == null)
+                return false;
+
+            // Check if we have enough resources for this building
+            bool hasPower = AvailablePower >= building.PowerConsumption;
+            bool hasWater = AvailableWater >= building.WaterConsumption;
+
+            // Power plants need water but not power to check
+            if (building.Type == BuildingType.SmallPowerPlant || building.Type == BuildingType.LargePowerPlant)
+                return hasWater; // Power plants only need water
+
+            // Water plants need power but not water to check
+            if (building.Type == BuildingType.SmallWaterPlant || building.Type == BuildingType.LargeWaterPlant)
+                return hasPower; // Water plants only need power
+
+            // If we're placing a first house with no population yet, we can always build it
+            if ((building.Type == BuildingType.SmallHouse ||
+                 building.Type == BuildingType.MediumHouse ||
+                 building.Type == BuildingType.LargeHouse) &&
+                Population == 0)
+                return true;
+
+            // Houses need both power and water
+            return hasPower && hasWater;
         }
+
 
         public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -187,5 +237,13 @@ namespace citybuilder_project.Model
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
+        public CityModel()
+        {
+            // Initialize with some starter resources to allow building initially
+            PowerProduction = 100;
+            WaterProduction = 100;
+        }
+
     }
+
 }
