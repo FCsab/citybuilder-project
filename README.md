@@ -1,32 +1,64 @@
-<h1>Alap Feladat (+2)</h1>
-<p>Az alap játékban szerepelni kell 1db, 15x15 ös pályának.
+# Alap Feladat (+2)
+
+Az alap játékban szerepelnie kell egy **15x15-ös pályának**.
+
+## Játékos Információk
+
 A játékosnak jelezzük:
-- a maradék pénzét
-- a jelenlegi bevételét (+/-)
-- a város lakóinak számát
-- hány ember tud még beköltözni a városba
-- mennyi áramot termel a város összesen és mennyi szabad még belőle
-- mennyi vizet termel a város összesen és mennyi szabad még belőle
-A játékos tudjon lerakni a következőket:
-- házak (3 méterben)
-- erőmű (2 méretben)
-- vízművet (2 méretben)
-Minden épület pénzben kerül és van fenntartási költsége, víz és áram igénye. A nagyobb épületeknek
-nagyobb a költsége és az áram/víz igénye, de több embert is tud „eltárolni”, a közművek esetén az
-épület drágább (fenttartásban is) és többet termel. A játékos a bevétele nő a lakosok száma alapján,
-ebből kivonva az épületek költségét kapja meg a végleges bevételt.
-A játékos kezdjen egy alap mennyiségű pénzzel és a bevétele legyen 0.
-A játékos adott időközönként kapja meg a bevételét (adjuk hozzá/vonjuk ki a pénzéből).
-A városba hosszabb időnként (bevétel idő többszöröse), lakosok érkezhetnek a városba, ha van még
-helyük hol lakni, ebben az esetben a (maximum a mostani lakosság számának 25%-a) beköltöznek a
-városba.</p>
 
-<h1>Épület megsemmísítés (+1)</h1>
-<p>A játékosnak legyen lehetősége lerombolni az épületeket.
-A lerombolás pénzbe kerüljön, az épület helye pedig váltson vissza üresre.
-Adott épület lerombolásánál annak legyen hatása a megfelelő értékekre (lakóháznál csökken a lakók
-száma és a bevétel, közműveknél a termelt érték mennyisége)</p>
+- 💰 **Maradék pénz**
+- 📈 **Jelenlegi bevétel** (+/-)
+- 👥 **Város lakóinak száma**
+- 🏠 **Beköltözhető emberek száma** (mennyi fér még el)
+- ⚡ **Összes áramtermelés** és a szabad kapacitás
+- 💧 **Összes víztermelés** és a szabad kapacitás
 
-<h1>Mentés/Betöltés (+2)</h1>
-<p>A játékosnak legyen lehetősége lementeni és betölteni a játékot. Mentéskor le kell menteni a város
-adatai, és a „térképet”.</p>
+## Lerakható Épületek
+
+A játékos a következőket tudja lerakni:
+
+- **Házak** (3 méretben)
+- **Erőművek** (2 méretben)
+- **Vízművek** (2 méretben)
+
+### Épületek tulajdonságai
+
+- Minden épület **pénzbe kerül** és van **fenntartási költsége**
+- **Víz** és **áram igénye** van
+- **Nagyobb épületek**: nagyobb költség, nagyobb víz/áram igény, több lakó vagy termelés
+- **Közművek**: drágábbak, de többet termelnek
+
+### Bevétel számítása
+
+- A játékos bevétele **nő a lakosok száma alapján**
+- Ebből **levonódik az épületek költsége**
+- **Végleges bevétel** = lakosok bevétele – épületek költsége
+
+### Játék kezdete
+
+- A játékos **alap pénzmennyiséggel** kezd
+- **Kezdő bevétel: 0**
+
+### Bevétel és lakosok érkezése
+
+- **Adott időközönként**: a játékos megkapja a bevételét (hozzáadódik vagy levonódik a pénzéből)
+- **Hosszabb időközönként** (a bevétel idő többszöröse): lakosok érkezhetnek, ha van hely
+    - **Maximum**: a jelenlegi lakosság 25%-a költözhet be egyszerre
+
+---
+
+# Épület Megsemmisítés (+1)
+
+- A játékos **lerombolhat épületeket**
+- **Lerombolás pénzbe kerül**
+- Az épület helye **visszavált üresre**
+- **Hatások**:
+    - **Lakóház**: csökken a lakók száma és a bevétel
+    - **Közmű**: csökken a termelt érték mennyisége
+
+---
+
+# Mentés / Betöltés (+2)
+
+- A játékos **elmentheti és betöltheti** a játékot
+- **Mentéskor**: el kell menteni a város adatait és a „térképet”
