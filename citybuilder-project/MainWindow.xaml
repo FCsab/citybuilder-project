@@ -38,6 +38,8 @@
         <StackPanel Grid.Row="0" Grid.ColumnSpan="2" Orientation="Horizontal" Background="LightGray" Margin="0,0,0,5">
             <Button Content="Start Game" Command="{Binding StartGameCommand}" Margin="5" Padding="10,5" />
             <Button Content="Reset Game" Command="{Binding ResetGameCommand}" Margin="5" Padding="10,5" />
+            <Button Content="Save Game" Command="{Binding SaveGameCommand}" Margin="5"/>
+            <Button Content="Load Game" Command="{Binding LoadGameCommand}" Margin="5"/>
             <TextBlock Text="{Binding GameStatus}" VerticalAlignment="Center" Margin="10,0" FontWeight="Bold" />
         </StackPanel>
 
