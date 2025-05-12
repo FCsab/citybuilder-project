@@ -26,7 +26,7 @@ namespace citybuilder_project.Model
                 {
                     _money = value;
                     OnPropertyChanged();
-                    OnPropertyChanged(nameof(Income)); // Income depends on money in some cases
+                    OnPropertyChanged(nameof(Income));
                 }
             }
         }
@@ -243,6 +243,51 @@ namespace citybuilder_project.Model
             PowerProduction = 100;
             WaterProduction = 100;
         }
+
+        public void RemoveBuilding(Building building)
+        {
+            if (building == null)
+                return;
+
+            // Refund 70% of the building's cost
+            Money += (int)(building.Cost * 0.8);
+
+            // Subtract maintenance cost
+            _totalMaintenanceCost -= building.MaintenanceCost;
+
+            // Handle population changes when removing housing
+            if (building.HousingCapacity > 0)
+            {
+                // Calculate how many people need to leave
+                int peopleToRemove = Math.Min(Population, building.HousingCapacity);
+                Population -= peopleToRemove;
+            }
+
+            // Update resources
+            HousingCapacity -= building.HousingCapacity;
+            PowerProduction -= building.PowerProduction;
+            PowerConsumption -= building.PowerConsumption;
+            WaterProduction -= building.WaterProduction;
+            WaterConsumption -= building.WaterConsumption;
+
+            // Recalculate income
+            CalculateIncome();
+
+            // Ensure all properties get notified
+            OnPropertyChanged(nameof(Money));
+            OnPropertyChanged(nameof(Income));
+            OnPropertyChanged(nameof(HousingCapacity));
+            OnPropertyChanged(nameof(PowerProduction));
+            OnPropertyChanged(nameof(PowerConsumption));
+            OnPropertyChanged(nameof(WaterProduction));
+            OnPropertyChanged(nameof(WaterConsumption));
+            OnPropertyChanged(nameof(AvailableHousing));
+            OnPropertyChanged(nameof(AvailablePower));
+            OnPropertyChanged(nameof(AvailableWater));
+        }
+
+
+
 
     }
 

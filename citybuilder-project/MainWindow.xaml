@@ -9,12 +9,14 @@
         Title="City Builder Game" Height="800" Width="1000">
 
     <!-- Define the necessary converters -->
+    <!-- Define the necessary converters -->
     <Window.Resources>
         <vm:IncomeToColorConverter x:Key="IncomeToColorConverter" />
         <vm:NegativeCyclesToColorConverter x:Key="NegativeCyclesToColorConverter" />
         <vm:NullToVisibilityConverter x:Key="NullToVisibilityConverter" />
         <vm:ZeroToVisibilityConverter x:Key="ZeroToVisibilityConverter" />
         <vm:BuildingTypeToNameConverter x:Key="BuildingTypeToNameConverter" />
+        <vm:BoolToColorConverter x:Key="BoolToColorConverter" />
     </Window.Resources>
 
 
@@ -115,9 +117,8 @@
                             BorderBrush="Black" BorderThickness="1">
                         <Border.InputBindings>
                             <MouseBinding Gesture="LeftClick" 
-                                          Command="{Binding DataContext.PlaceBuildingCommand, 
-                                                            RelativeSource={RelativeSource AncestorType=ItemsControl}}" 
-                                          CommandParameter="{Binding}" />
+                  Command="{Binding DataContext.CellClickCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                         CommandParameter="{Binding}" />
                         </Border.InputBindings>
                     </Border>
                 </DataTemplate>

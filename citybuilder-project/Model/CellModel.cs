@@ -17,6 +17,7 @@ namespace citybuilder_project.Model
 
     public class CellModel : INotifyPropertyChanged
     {
+
         public int Row { get; set; }
         public int Column { get; set; }
 
@@ -34,6 +35,8 @@ namespace citybuilder_project.Model
             }
         }
 
+
+
         private BuildingType _buildingType = BuildingType.None;
         public BuildingType BuildingType
         {
@@ -44,12 +47,13 @@ namespace citybuilder_project.Model
                 {
                     _buildingType = value;
                     OnPropertyChanged();
-                    OnPropertyChanged(nameof(HasBuilding));
+                    OnPropertyChanged(nameof(HasBuilding)); // Notify when HasBuilding changes
                 }
             }
         }
 
         public bool HasBuilding => BuildingType != BuildingType.None;
+
 
         public event PropertyChangedEventHandler? PropertyChanged;
 

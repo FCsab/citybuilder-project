@@ -12,13 +12,18 @@ namespace citybuilder_project.ViewModel
     {
         private CityModel _city;
         private BuildingType _selectedBuildingType = BuildingType.None;
-        private DispatcherTimer _gameTimer;
-        private DispatcherTimer _populationTimer;
+        private DispatcherTimer _gameTimer = null!; // Mark as null-forgiving since we initialize in InitializeTimers
+        private DispatcherTimer _populationTimer = null!; // Mark as null-forgiving since we initialize in InitializeTimers
         private int _cycleCounter = 0;
         private Random _random = new Random();
 
+        // Remove the _isRemovalMode field as we don't need it anymore
+
         public ObservableCollection<CellModel> Cells { get; set; }
         public ObservableCollection<BuildingType> AvailableBuildings { get; set; }
+
+        // Add RemoveBuilding to the available building types
+        public const BuildingType RemoveBuildingOption = BuildingType.None;
 
         public CityModel City => _city;
 
@@ -32,6 +37,16 @@ namespace citybuilder_project.ViewModel
                     _selectedBuildingType = value;
                     OnPropertyChanged();
                     UpdateSelectedBuildingInfo();
+
+                    // Set appropriate message based on selected building type
+                    if (value == RemoveBuildingOption)
+                    {
+                        GameStatus = "Removal mode active. Click a building to remove it.";
+                    }
+                    else
+                    {
+                        GameStatus = "Building placement mode active.";
+                    }
                 }
             }
         }
@@ -47,7 +62,11 @@ namespace citybuilder_project.ViewModel
             }
         }
 
+        // Remove IsRemovalMode property as we'll use SelectedBuildingType == RemoveBuildingOption instead
+
         public ICommand PlaceBuildingCommand { get; set; }
+        public ICommand CellClickCommand { get; }
+        // Remove ToggleRemovalModeCommand
         public ICommand StartGameCommand { get; }
         public ICommand ResetGameCommand { get; }
 
@@ -71,6 +90,7 @@ namespace citybuilder_project.ViewModel
             Cells = new ObservableCollection<CellModel>();
             AvailableBuildings = new ObservableCollection<BuildingType>
             {
+                RemoveBuildingOption, // Add the Remove Building option at the top
                 BuildingType.SmallHouse,
                 BuildingType.MediumHouse,
                 BuildingType.LargeHouse,
@@ -83,7 +103,10 @@ namespace citybuilder_project.ViewModel
             // Initialize the 15x15 grid
             InitializeGrid();
 
+            // Initialize commands
             PlaceBuildingCommand = new RelayCommand<CellModel>(PlaceBuilding, CanPlaceBuilding);
+            CellClickCommand = new RelayCommand<CellModel>(OnCellClick);
+            // Remove ToggleRemovalModeCommand
             StartGameCommand = new RelayCommand<object>(_ => StartGame());
             ResetGameCommand = new RelayCommand<object>(_ => ResetGame());
 
@@ -117,7 +140,6 @@ namespace citybuilder_project.ViewModel
             _populationTimer.Tick += OnPopulationTimerTick;
         }
 
-
         private void StartGame()
         {
             _gameTimer.Start();
@@ -137,38 +159,31 @@ namespace citybuilder_project.ViewModel
         }
 
         private void OnGameTimerTick(object? sender, EventArgs e)
-{
-    _cycleCounter++;
-    GameStatus = $"Game cycle: {_cycleCounter}";
-
-    // Add income to money
-    _city.Money += _city.Income;
-
-            // Regenerate a small amount of resources each cycle to ensure building is always possible
-            _city.Money += City.Income;
-    
-    // Check for game over condition
-    if (_city.Money < 0)
-    {
-        _city.NegativeCycles++;
-        if (_city.IsGameOver)
         {
-            _gameTimer.Stop();
-            _populationTimer.Stop();
-            GameStatus = "Game Over! You've been in debt for 2 cycles.";
+            _cycleCounter++;
+            GameStatus = $"Game cycle: {_cycleCounter}";
+
+            // Add income to money
+            _city.Money += _city.Income;
+
+            // Check for game over condition
+            if (_city.Money < 0)
+            {
+                _city.NegativeCycles++;
+                if (_city.IsGameOver)
+                {
+                    _gameTimer.Stop();
+                    _populationTimer.Stop();
+                    GameStatus = "Game Over! You've been in debt for 2 cycles.";
+                }
+            }
+            else
+            {
+                _city.NegativeCycles = 0;
+            }
+
+            OnPropertyChanged(nameof(City));
         }
-    }
-    else
-    {
-        _city.NegativeCycles = 0;
-    }
-
-    // Refresh UI commands to update building placement availability
-    RefreshCommands();
-
-    OnPropertyChanged(nameof(City));
-}
-
 
         private void OnPopulationTimerTick(object? sender, EventArgs e)
         {
@@ -191,7 +206,21 @@ namespace citybuilder_project.ViewModel
         {
             if (_selectedBuildingType != BuildingType.None)
             {
-                SelectedBuilding = Building.GetBuildingByType(_selectedBuildingType);
+                // Only create a building object for actual buildings, not for the remove option
+                if (_selectedBuildingType != RemoveBuildingOption)
+                {
+                    SelectedBuilding = Building.GetBuildingByType(_selectedBuildingType);
+                }
+                else
+                {
+                    // For removal option, set a special "building" to represent removal
+                    SelectedBuilding = new Building
+                    {
+                        Name = "Remove Building",
+                        Color = "Red",
+                        Type = RemoveBuildingOption
+                    };
+                }
             }
             else
             {
@@ -199,10 +228,43 @@ namespace citybuilder_project.ViewModel
             }
         }
 
+        private void OnCellClick(CellModel cell)
+        {
+            if (cell == null) return;
+
+            // Check if we're in removal mode (SelectedBuildingType == RemoveBuildingOption)
+            if (SelectedBuildingType == RemoveBuildingOption)
+            {
+                if (cell.BuildingType != BuildingType.None)
+                {
+                    RemoveBuilding(cell);
+                }
+                else
+                {
+                    GameStatus = "No building to remove at this location.";
+                }
+            }
+            else
+            {
+                if (cell.BuildingType == BuildingType.None && SelectedBuildingType != BuildingType.None)
+                {
+                    PlaceBuilding(cell);
+                }
+                else if (cell.BuildingType != BuildingType.None)
+                {
+                    GameStatus = "Cannot place building here. Select 'Remove Building' option first.";
+                }
+            }
+        }
+
         private bool CanPlaceBuilding(CellModel? cell)
         {
             if (cell == null || SelectedBuildingType == BuildingType.None)
                 return false;
+
+            // If we're in removal mode, we can "place" (remove) if there's a building
+            if (SelectedBuildingType == RemoveBuildingOption)
+                return cell.HasBuilding;
 
             // Check if cell already has a building
             if (cell.HasBuilding)
@@ -220,29 +282,43 @@ namespace citybuilder_project.ViewModel
             {
                 var building = Building.GetBuildingByType(SelectedBuildingType);
 
-                // Apply the building
-                cell.BuildingType = SelectedBuildingType;
-                cell.Color = building.Color;
+                // Check if player can afford and support this building
+                if (_city.CanAfford(building) && _city.CanSupport(building))
+                {
+                    // Apply the building
+                    cell.BuildingType = SelectedBuildingType;
+                    cell.Color = building.Color;
 
-                // Update city model
-                _city.AddBuilding(building);
+                    // Update city model
+                    _city.AddBuilding(building);
 
-                // Refresh all commands
-                RefreshCommands();
-
-                // Show status message
-                GameStatus = $"Placed {building.Name}";
+                    // Show status message
+                    GameStatus = $"Placed {building.Name}";
+                }
+                else
+                {
+                    GameStatus = "Cannot place building. Check resources and money.";
+                }
             }
         }
 
-        private void RefreshCommands()
+        private void RemoveBuilding(CellModel cell)
         {
-            (PlaceBuildingCommand as RelayCommand<CellModel>)?.RaiseCanExecuteChanged();
-            (StartGameCommand as RelayCommand<object>)?.RaiseCanExecuteChanged();
-            (ResetGameCommand as RelayCommand<object>)?.RaiseCanExecuteChanged();
+            if (cell != null && cell.HasBuilding)
+            {
+                var building = Building.GetBuildingByType(cell.BuildingType);
+
+                // Update city model
+                _city.RemoveBuilding(building);
+
+                // Clear the cell
+                cell.BuildingType = BuildingType.None;
+                cell.Color = "White";
+
+                // Show status message with refund amount
+                GameStatus = $"Removed {building.Name} and refunded ${building.Cost * 0.7:F0}";
+            }
         }
-
-
 
         public event PropertyChangedEventHandler? PropertyChanged;
 
